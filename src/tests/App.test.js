@@ -76,3 +76,46 @@ test("shows new recipe after adding", async () => {
   const recipe = await screen.findByText(recipeName);
   expect(recipe).toBeInTheDocument();
 });
+
+test("displays multiple recipes below 'My Recipes' heading", async () => {
+  render(<App />);
+
+  // Recipe data to add
+  const recipes = [
+    { name: 'Tofu Scramble Tacos', instructions: 'Heat skillet and cook tofu with spices.' },
+    { name: 'Vegan Pancakes', instructions: 'Mix flour, almond milk, and baking powder. Cook on skillet.' },
+    { name: 'Spaghetti Marinara', instructions: 'Cook pasta, add marinara sauce, and stir.' },
+  ];
+
+  // Add each recipe using the form
+  for (const recipe of recipes) {
+    // Open the form by clicking "Add Recipe"
+    const addButton = await screen.findByRole('button', { name: /Add Recipe/i });
+    userEvent.click(addButton);
+
+    // Fill out form fields
+    const nameInput = await screen.findByRole('textbox', { name: /Recipe Name/i });
+    const instructionsInput = screen.getByLabelText(/Recipe Instructions/i);
+
+    await userEvent.type(nameInput, recipe.name);
+    await userEvent.type(instructionsInput, recipe.instructions);
+
+    // Submit the form
+    const submitButton = screen.getByRole('button', { name: /Submit/i });
+    userEvent.click(submitButton);
+  }
+
+  // Verify all recipes appear in the list below the "My Recipes" heading
+  expect(screen.getByRole('heading', { name: /My Recipes/i })).toBeInTheDocument();
+
+  for (const recipe of recipes) {
+    // Use a function matcher to check that each recipe's name appears in the document
+    expect(
+      await screen.findByText((content, element) => element?.textContent === recipe.name)
+    ).toBeInTheDocument();
+
+    expect(
+      await screen.findByText((content, element) => element?.textContent === recipe.instructions)
+    ).toBeInTheDocument();
+  }
+});
